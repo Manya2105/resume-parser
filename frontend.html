@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resume Parser</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #0f172a;
+            color: #e2e8f0;
+            min-height: 100vh;
+        }
+
+        header {
+            background: linear-gradient(135deg, #1e293b, #0f172a);
+            border-bottom: 1px solid #334155;
+            padding: 24px 40px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        header h1 {
+            font-size: 24px;
+            font-weight: 700;
+            color: #f8fafc;
+        }
+
+        header span {
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            color: white;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 3px 10px;
+            border-radius: 20px;
+            letter-spacing: 0.5px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 40px auto;
+            padding: 0 24px;
+            display: grid;
+            gap: 24px;
+        }
+
+        .card {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 16px;
+            padding: 28px;
+        }
+
+        .card h2 {
+            font-size: 16px;
+            font-weight: 600;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 20px;
+        }
+
+        .upload-area {
+            border: 2px dashed #334155;
+            border-radius: 12px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+        }
+
+        .upload-area:hover {
+            border-color: #6366f1;
+            background: #1e293b;
+        }
+
+        .upload-area input[type="file"] {
+            position: absolute;
+            inset: 0;
+            opacity: 0;
+            cursor: pointer;
+            width: 100%;
+            height: 100%;
+        }
+
+        .upload-icon {
+            font-size: 36px;
+            margin-bottom: 12px;
+        }
+
+        .upload-area p {
+            color: #64748b;
+            font-size: 14px;
+        }
+
+        .upload-area p strong {
+            color: #6366f1;
+        }
+
+        #fileName {
+            margin-top: 12px;
+            font-size: 13px;
+            color: #6366f1;
+            font-weight: 500;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            color: white;
+            border: none;
+            padding: 12px 28px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.2s;
+            margin-top: 16px;
+            width: 100%;
+        }
+
+        .btn:hover { opacity: 0.9; }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .results-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .stat-box {
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 12px;
+            padding: 16px 20px;
+        }
+
+        .stat-box .label {
+            font-size: 11px;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 6px;
+        }
+
+        .stat-box .value {
+            font-size: 18px;
+            font-weight: 700;
+            color: #f8fafc;
+        }
+
+        .stat-box .sub {
+            font-size: 12px;
+            color: #6366f1;
+            margin-top: 2px;
+        }
+
+        .skills-section { margin-top: 16px; }
+
+        .skills-section .label {
+            font-size: 12px;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 10px;
+        }
+
+        .skill-tags { display: flex; flex-wrap: wrap; gap: 8px; }
+
+        .skill-tag {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .skill-tag.default { background: #1e3a5f; color: #93c5fd; }
+        .skill-tag.matched { background: #14532d; color: #86efac; }
+        .skill-tag.missing { background: #4c0519; color: #fca5a5; }
+
+        textarea {
+            width: 100%;
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 10px;
+            padding: 14px;
+            color: #e2e8f0;
+            font-size: 14px;
+            font-family: inherit;
+            resize: vertical;
+            min-height: 140px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        textarea:focus { border-color: #6366f1; }
+
+        .score-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .score-box {
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .score-box .score-label {
+            font-size: 11px;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+
+        .score-number {
+            font-size: 36px;
+            font-weight: 800;
+        }
+
+        .score-number.high { color: #86efac; }
+        .score-number.mid { color: #fde68a; }
+        .score-number.low { color: #fca5a5; }
+
+        .divider {
+            border: none;
+            border-top: 1px solid #334155;
+            margin: 20px 0;
+        }
+
+        .hidden { display: none; }
+
+        .loading {
+            text-align: center;
+            color: #64748b;
+            padding: 20px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>Resume Parser</h1>
+    <span>AI POWERED</span>
+</header>
+
+<div class="container">
+
+    <!-- Upload Card -->
+    <div class="card">
+        <h2>Upload Resume</h2>
+        <div class="upload-area">
+            <input type="file" id="fileInput" accept=".pdf" onchange="handleFileChange()">
+            <div class="upload-icon">📄</div>
+            <p><strong>Click to upload</strong> or drag and drop</p>
+            <p>PDF files only</p>
+            <div id="fileName"></div>
+        </div>
+        <button class="btn" onclick="parseResume()">Parse Resume</button>
+    </div>
+
+    <!-- Parse Results Card -->
+    <div class="card hidden" id="parseResults">
+        <h2>Resume Analysis</h2>
+        <div class="results-grid">
+            <div class="stat-box">
+                <div class="label">Name</div>
+                <div class="value" id="resName">—</div>
+            </div>
+            <div class="stat-box">
+                <div class="label">Predicted Category</div>
+                <div class="value" id="resCategory">—</div>
+                <div class="sub" id="resConfidence"></div>
+            </div>
+        </div>
+        <div class="skills-section">
+            <div class="label">Skills Detected (<span id="skillCount">0</span>)</div>
+            <div class="skill-tags" id="skillTags"></div>
+        </div>
+    </div>
+
+    <!-- JD Match Card -->
+    <div class="card">
+        <h2>Match Against Job Description</h2>
+        <textarea id="jdText" placeholder="Paste the job description here..."></textarea>
+        <button class="btn" onclick="matchJD()">Analyse Match</button>
+    </div>
+
+    <!-- Match Results Card -->
+    <div class="card hidden" id="matchResults">
+        <h2>Match Results</h2>
+        <div class="score-row">
+            <div class="score-box">
+                <div class="score-label">Keyword Match</div>
+                <div class="score-number" id="keywordScore">—</div>
+                <div style="font-size:11px;color:#64748b;margin-top:4px;">Exact skill overlap</div>
+            </div>
+            <div class="score-box">
+                <div class="score-label">Semantic Similarity</div>
+                <div class="score-number" id="semanticScore">—</div>
+                <div style="font-size:11px;color:#64748b;margin-top:4px;">Contextual relevance</div>
+            </div>
+        </div>
+        <hr class="divider">
+        <div class="skills-section">
+            <div class="label">Matched Skills</div>
+            <div class="skill-tags" id="matchedTags"></div>
+        </div>
+        <div class="skills-section" style="margin-top:16px;">
+            <div class="label">Missing Skills</div>
+            <div class="skill-tags" id="missingTags"></div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    function handleFileChange() {
+        const file = document.getElementById('fileInput').files[0];
+        document.getElementById('fileName').textContent = file ? file.name : '';
+    }
+
+    function getScoreClass(score) {
+        if (score >= 60) return 'high';
+        if (score >= 35) return 'mid';
+        return 'low';
+    }
+
+    async function parseResume() {
+        const fileInput = document.getElementById('fileInput');
+        if (!fileInput.files[0]) {
+            alert('Please select a PDF file first.');
+            return;
+        }
+
+        const resultsCard = document.getElementById('parseResults');
+        resultsCard.classList.remove('hidden');
+        resultsCard.innerHTML = '<div class="loading">Analysing resume...</div>';
+
+        const formData = new FormData();
+        formData.append('file', fileInput.files[0]);
+
+        try {
+            const response = await fetch('http://127.0.0.1:8000/parse-resume', {
+                method: 'POST',
+                body: formData
+            });
+            const data = await response.json();
+
+            resultsCard.innerHTML = `
+                <h2>Resume Analysis</h2>
+                <div class="results-grid">
+                    <div class="stat-box">
+                        <div class="label">Name</div>
+                        <div class="value">${data.name || 'Not detected'}</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="label">Predicted Category</div>
+                        <div class="value">${data.predicted_category}</div>
+                        <div class="sub">${data.confidence}% confidence</div>
+                    </div>
+                </div>
+                <div class="skills-section">
+                    <div class="label">Skills Detected (${data.num_skills})</div>
+                    <div class="skill-tags">
+                        ${data.skills.map(s => `<span class="skill-tag default">${s}</span>`).join('')}
+                    </div>
+                </div>
+            `;
+        } catch (error) {
+            resultsCard.innerHTML = `<div class="loading">Error: ${error.message}</div>`;
+        }
+    }
+
+    async function matchJD() {
+        const fileInput = document.getElementById('fileInput');
+        const jdText = document.getElementById('jdText').value;
+
+        if (!fileInput.files[0]) {
+            alert('Please upload a resume first.');
+            return;
+        }
+        if (!jdText.trim()) {
+            alert('Please paste a job description.');
+            return;
+        }
+
+        const matchCard = document.getElementById('matchResults');
+        matchCard.classList.remove('hidden');
+        matchCard.innerHTML = '<div class="loading">Calculating match...</div>';
+
+        const formData = new FormData();
+        formData.append('file', fileInput.files[0]);
+        formData.append('jd_text', jdText);
+
+        try {
+            const response = await fetch('http://127.0.0.1:8000/match-jd', {
+                method: 'POST',
+                body: formData
+            });
+            const data = await response.json();
+
+            const kwClass = getScoreClass(data.match_score);
+            const semClass = getScoreClass(data.semantic_similarity);
+
+            matchCard.innerHTML = `
+    <h2>Match Results</h2>
+    
+    <div style="text-align:center;margin-bottom:24px;">
+        <div style="font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">ATS Score</div>
+        <div style="font-size:64px;font-weight:800;line-height:1;" class="${getScoreClass(data.ats_score) === 'high' ? 'score-number high' : getScoreClass(data.ats_score) === 'mid' ? 'score-number mid' : 'score-number low'}">${data.ats_score}</div>
+        <div style="font-size:13px;margin-top:8px;color:#94a3b8;">${data.verdict}</div>
+    </div>
+
+    <div class="score-row">
+        <div class="score-box">
+            <div class="score-label">Keyword Match</div>
+            <div class="score-number ${kwClass}">${data.match_score}%</div>
+            <div style="font-size:11px;color:#64748b;margin-top:4px;">Exact skill overlap</div>
+        </div>
+        <div class="score-box">
+            <div class="score-label">Semantic Similarity</div>
+            <div class="score-number ${semClass}">${data.semantic_similarity}%</div>
+            <div style="font-size:11px;color:#64748b;margin-top:4px;">Contextual relevance</div>
+        </div>
+    </div>
+    <hr class="divider">
+    <div class="skills-section">
+        <div class="label">Matched Skills</div>
+        <div class="skill-tags">
+            ${data.matched_skills.length ? data.matched_skills.map(s => `<span class="skill-tag matched">${s}</span>`).join('') : '<span style="color:#64748b;font-size:13px;">None found</span>'}
+        </div>
+    </div>
+    <div class="skills-section" style="margin-top:16px;">
+        <div class="label">Missing Skills</div>
+        <div class="skill-tags">
+            ${data.missing_skills.length ? data.missing_skills.map(s => `<span class="skill-tag missing">${s}</span>`).join('') : '<span style="color:#64748b;font-size:13px;">None — perfect match!</span>'}
+        </div>
+    </div>
+`;
+        } catch (error) {
+            matchCard.innerHTML = `<div class="loading">Error: ${error.message}</div>`;
+        }
+    }
+</script>
+
+</body>
+</html>
